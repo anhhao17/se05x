@@ -3,35 +3,36 @@ project(se051_demo_superbuild NONE)
 
 include(ExternalProject)
 
-set(OPENSSL_PREFIX ${CMAKE_BINARY_DIR}/openssl)
+set(MBEDTLS_PREFIX ${CMAKE_BINARY_DIR}/mbedtls)
 set(BUILD_JOBS 2 CACHE STRING "Parallel build jobs")
 
-ExternalProject_Add(openssl
-    GIT_REPOSITORY  https://github.com/openssl/openssl.git
-    GIT_TAG         openssl-3.3.2
-    GIT_SHALLOW     TRUE
-    BUILD_IN_SOURCE TRUE
-    CONFIGURE_COMMAND <SOURCE_DIR>/Configure linux-aarch64
-        --cross-compile-prefix=aarch64-linux-gnu-
-        --prefix=${OPENSSL_PREFIX}
-        --libdir=lib
-        no-shared no-tests no-docs
-    BUILD_COMMAND   make -j8
-    INSTALL_COMMAND make install_sw
+# Cross-compile mbedTLS (static) for aarch64. Source is the ext/mbedtls submodule
+# pinned to the v3.6 LTS line. Programs/tests are skipped to keep the build lean.
+ExternalProject_Add(mbedtls
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/mbedtls
+    CMAKE_ARGS
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_CURRENT_SOURCE_DIR}/aarch64-toolchain.cmake
+        -DCMAKE_INSTALL_PREFIX=${MBEDTLS_PREFIX}
+        -DCMAKE_BUILD_TYPE=Release
+        -DUSE_SHARED_MBEDTLS_LIBRARY=OFF
+        -DUSE_STATIC_MBEDTLS_LIBRARY=ON
+        -DENABLE_PROGRAMS=OFF
+        -DENABLE_TESTING=OFF
+    BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --parallel ${BUILD_JOBS}
 )
 
+# ECC example, built against mbedTLS via the app/ wrapper (keeps the
+# plug-and-trust submodule unmodified). See app/CMakeLists.txt.
 ExternalProject_Add(ecc_example
-    DEPENDS    openssl
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/plug-and-trust/ecc_example
+    DEPENDS    mbedtls
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/app
     CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_CURRENT_SOURCE_DIR}/aarch64-toolchain.cmake
         -DPTMW_Applet=SE051_H
         -DPTMW_SE05X_Ver=07_02
-        -DPTMW_HostCrypto=OPENSSL
+        -DPTMW_HostCrypto=MBEDTLS
         -DPTMW_SE05X_Auth=PlatfSCP03
-        -DOPENSSL_INCLUDE_DIR=${OPENSSL_PREFIX}/include
-        -DOPENSSL_CRYPTO_LIBRARY=${OPENSSL_PREFIX}/lib/libcrypto.a
-        -DOPENSSL_SSL_LIBRARY=${OPENSSL_PREFIX}/lib/libssl.a
+        -DMBEDTLS_PREFIX=${MBEDTLS_PREFIX}
     BUILD_COMMAND   ${CMAKE_COMMAND} --build <BINARY_DIR> --parallel ${BUILD_JOBS}
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/ex_ecc ${CMAKE_BINARY_DIR}/ex_ecc
 )

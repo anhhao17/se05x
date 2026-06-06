@@ -1,0 +1,6 @@
+[submodule "plug-and-trust"]
+	path = ext/plug-and-trust
+	url = https://github.com/NXP/plug-and-trust.git
+[submodule "ext/mbedtls"]
+	path = ext/mbedtls
+	url = https://github.com/Mbed-TLS/mbedtls.git
