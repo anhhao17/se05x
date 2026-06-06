@@ -22,7 +22,20 @@ Two implementations are provided side-by-side:
 Adds a standard [PKCS#11 v2.40](https://github.com/NXPPlugNTrust/se05x-pkcs11) interface over the SE051:
 
 - **`pkcs11_lib/`** — builds `libsss_pkcs11.so` (NXP se05x-pkcs11 plugin, mbedTLS backend)
-- **`pkcs11_example/`** — C demo (`pkcs11_demo`) that loads the library via `dlopen` and exercises RNG, EC key generation, and ECDSA sign/verify through standard PKCS#11 function pointers
+- **`pkcs11_example/`** — C demo suite (`pkcs11_demo`) loading the library via `dlopen`:
+
+| Demo | Operations |
+|---|---|
+| `run_module_info` | Library info, slot/token/mechanism list, object enumeration |
+| `run_random_gen` | `C_GenerateRandom` for 1–1024 byte buffers |
+| `run_digest` | SHA-1/224/256/384/512 via `C_DigestInit` / `C_Digest` |
+| `run_sym_key_gen` | AES-128/192/256 + generic secret via `C_GenerateKey` |
+| `run_import_object` | Import AES, generic secret, EC P-256 public key via `C_CreateObject` |
+| `run_ecc` | P-256/384/521 keygen + ECDSA-SHA256/384/512 sign/verify |
+| `run_rsa` | RSA-2048 keygen + PKCS#1 v1.5 sign/verify + PSS sign/verify |
+| `run_ecdh_derive` | Two P-256 key pairs + shared secret via `CKM_ECDH1_DERIVE` |
+| `run_hmac` | Import key + SHA-1/256/384/512 HMAC sign/verify |
+| `run_encrypt_decrypt` | AES-ECB, AES-CBC roundtrip + RSA-2048 OAEP encrypt/decrypt |
 
 ## Prerequisites
 
