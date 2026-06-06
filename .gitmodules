@@ -4,3 +4,6 @@
 [submodule "ext/mbedtls"]
 	path = ext/mbedtls
 	url = https://github.com/Mbed-TLS/mbedtls.git
+[submodule "ext/se05x-pkcs11"]
+	path = ext/se05x-pkcs11
+	url = https://github.com/NXPPlugNTrust/se05x-pkcs11

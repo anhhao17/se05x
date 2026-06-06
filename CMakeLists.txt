@@ -25,6 +25,7 @@ ExternalProject_Add(mbedtls
         ${TOOLCHAIN_ARG}
         -DCMAKE_INSTALL_PREFIX=${MBEDTLS_PREFIX}
         -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
         -DUSE_SHARED_MBEDTLS_LIBRARY=OFF
         -DUSE_STATIC_MBEDTLS_LIBRARY=ON
         -DENABLE_PROGRAMS=OFF
@@ -60,4 +61,30 @@ ExternalProject_Add(cpp_app
         -DMBEDTLS_PREFIX=${MBEDTLS_PREFIX}
     BUILD_COMMAND   ${CMAKE_COMMAND} --build <BINARY_DIR> --parallel ${BUILD_JOBS}
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/se05x_crypto_app ${CMAKE_BINARY_DIR}/se05x_crypto_app
+)
+
+# PKCS#11 shared library (libsss_pkcs11.so) — NXP se05x-pkcs11 plugin built
+# against our existing ext/plug-and-trust + mbedTLS backend.
+ExternalProject_Add(pkcs11_lib
+    DEPENDS    mbedtls
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/pkcs11_lib
+    CMAKE_ARGS
+        ${TOOLCHAIN_ARG}
+        -DPTMW_Applet=SE051_H
+        -DPTMW_SE05X_Ver=07_02
+        -DPTMW_HostCrypto=MBEDTLS
+        -DPTMW_SE05X_Auth=PlatfSCP03
+        -DMBEDTLS_PREFIX=${MBEDTLS_PREFIX}
+    BUILD_COMMAND   ${CMAKE_COMMAND} --build <BINARY_DIR> --parallel ${BUILD_JOBS}
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libsss_pkcs11.so ${CMAKE_BINARY_DIR}/libsss_pkcs11.so
+)
+
+# PKCS#11 C demo — loads libsss_pkcs11.so at runtime via dlopen.
+ExternalProject_Add(pkcs11_example
+    DEPENDS    pkcs11_lib
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/pkcs11_example
+    CMAKE_ARGS
+        ${TOOLCHAIN_ARG}
+    BUILD_COMMAND   ${CMAKE_COMMAND} --build <BINARY_DIR> --parallel ${BUILD_JOBS}
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/pkcs11_demo ${CMAKE_BINARY_DIR}/pkcs11_demo
 )
